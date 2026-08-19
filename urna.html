@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Urna Eletrônica - Demonstração Didática</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+    }
+
+    body {
+      background-color: #1e293b;
+      color: #333;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Container Principal da Urna */
+    .urna-container {
+      background-color: #d1d5db;
+      border: 3px solid #9ca3af;
+      border-radius: 12px;
+      padding: 25px;
+      display: flex;
+      gap: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      max-width: 900px;
+      width: 100%;
+    }
+
+    /* Tela da Urna */
+    .tela {
+      background-color: #f8fafc;
+      border: 3px solid #64748b;
+      border-radius: 8px;
+      flex: 1.2;
+      min-height: 380px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .tela-header {
+      font-size: 14px;
+      font-weight: bold;
+      color: #475569;
+      text-transform: uppercase;
+    }
+
+    .cargo {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 15px 0 5px 0;
+      text-align: center;
+    }
+
+    .numero-container {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 15px 0;
+    }
+
+    .caixa-digito {
+      width: 38px;
+      height: 48px;
+      border: 2px solid #334155;
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 44px;
+      background: #fff;
+    }
+
+    .caixa-digito.pisca {
+      animation: pisca 1s infinite;
+    }
+
+    @keyframes pisca {
+      0%, 100% { border-color: #334155; }
+      50% { border-color: transparent; }
+    }
+
+    .info-candidato {
+      margin-top: 10px;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .tela-fim {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      font-size: 70px;
+      font-weight: bold;
+      color: #1e293b;
+    }
+
+    .instrucoes-rodape {
+      border-top: 2px solid #cbd5e1;
+      padding-top: 8px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Teclado */
+    .teclado {
+      background-color: #1e293b;
+      padding: 20px;
+      border-radius: 8px;
+      flex: 0.9;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+    }
+
+    .teclado-top {
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 5px;
+      letter-spacing: 1px;
+    }
+
+    .numeros-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .btn-num {
+      background-color: #334155;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 12px 0;
+      cursor: pointer;
+      box-shadow: 0 4px #0f172a;
+      transition: active 0.1s;
+    }
+
+    .btn-num:active {
+      box-shadow: 0 1px #0f172a;
+      transform: translateY(3px);
+    }
+
+    .acoes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-acao {
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 15px 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 0 4px rgba(0,0,0,0.3);
+      user-select: none;
+    }
+
+    .btn-branco { background-color: #ffffff; color: #000; }
+    .btn-corrige { background-color: #f97316; color: #fff; }
+    .btn-confirma { background-color: #16a34a; color: #fff; font-size: 10px; }
+
+    .btn-acao:active {
+      transform: translateY(3px);
+      box-shadow: none;
+    }
+
+    /* Área de Botão de Impressão (SEMPRE VISÍVEL) */
+    .area-relatorio-externa {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-imprimir {
+      background-color: #0284c7;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn-imprimir:hover {
+      background-color: #0369a1;
+    }
+
+    .btn-imprimir:active {
+      transform: translateY(2px);
+    }
+
+    /* Painel do Professor / Controle de Manipulação (OCULTO POR PADRÃO) */
+    .painel-professor {
+      display: none; /* Inicia oculto */
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .painel-professor h2 {
+      font-size: 18px;
+      color: #dc2626;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .controle-fraude {
+      background-color: #fef2f2;
+      border: 1px solid #fca5a5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .codigo-exemplo {
+      background-color: #0f172a;
+      color: #38bdf8;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      margin-top: 10px;
+      overflow-x: auto;
+    }
+
+    .tabela-votos {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .tabela-votos th, .tabela-votos td {
+      border: 1px solid #cbd5e1;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .tabela-votos th {
+      background-color: #f1f5f9;
+    }
+
+    /* ESTILOS EXCLUSIVOS PARA IMPRESSÃO DO RELATÓRIO */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+      }
+
+      .urna-container,
+      .area-relatorio-externa,
+      .controle-fraude,
+      .btn-imprimir {
+        display: none !important;
+      }
+
+      .painel-professor {
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .tabela-votos th, .tabela-votos td {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+      }
+
+      .painel-professor::before {
+        content: "RELATÓRIO DE AUDITORIA - CONTAGEM DE VOTOS";
+        display: block;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIMULADOR DA URNA -->
+  <div class="urna-container">
+    <div class="tela" id="tela">
+      <!-- Conteúdo injetado pelo JavaScript -->
+    </div>
+
+    <div class="teclado">
+      <div class="teclado-top">JUSTIÇA ELEITORAL</div>
+      <div class="numeros-grid">
+        <button class="btn-num" onclick="digitar('1')">1</button>
+        <button class="btn-num" onclick="digitar('2')">2</button>
+        <button class="btn-num" onclick="digitar('3')">3</button>
+        <button class="btn-num" onclick="digitar('4')">4</button>
+        <button class="btn-num" onclick="digitar('5')">5</button>
+        <button class="btn-num" onclick="digitar('6')">6</button>
+        <button class="btn-num" onclick="digitar('7')">7</button>
+        <button class="btn-num" onclick="digitar('8')">8</button>
+        <button class="btn-num" onclick="digitar('9')">9</button>
+        <button class="btn-num" style="grid-column: span 3;" onclick="digitar('0')">0</button>
+      </div>
+      <div class="acoes-grid">
+        <button class="btn-acao btn-branco" onclick="votarBranco()">Branco</button>
+        <button class="btn-acao btn-corrige" onclick="corrigir()">Corrige</button>
+        <button class="btn-acao btn-confirma" id="btn-confirma">Confirma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO DE IMPRESSÃO FIXO E VISÍVEL -->
+  <div class="area-relatorio-externa">
+    <button class="btn-imprimir" onclick="imprimirRelatorio()">
+      🖨️ Imprimir Relatório de Votos
+    </button>
+  </div>
+
+  <!-- PAINEL DIDÁTICO DO PROFESSOR (OCULTO INICIALMENTE) -->
+  <div class="painel-professor" id="painel-professor">
+    <h2>⚠️ Painel de Demonstração Didática (Manipulação do Incremento)</h2>
+    
+    <div class="controle-fraude">
+      <label><strong>Selecione a Regra da Variável Contadora no Código JS:</strong></label><br><br>
+      
+      <input type="radio" id="normal" name="regra_voto" value="normal" checked onchange="alterarRegra()">
+      <label for="normal"><strong>Código Legítimo:</strong> Incrementa <code>votos = votos + 1</code> exatamente para quem recebeu o voto.</label><br><br>
+
+      <input type="radio" id="fraude_peso" name="regra_voto" value="fraude_peso" onchange="alterarRegra()">
+      <label for="fraude_peso"><strong>Manipulação de Peso:</strong> Se votar em <strong>88 - Eduardo Jorge (IOT)</strong>, incrementa <code>votos = votos + 2</code> (Peso Duplo).</label><br><br>
+
+      <input type="radio" id="fraude_desvio" name="regra_voto" value="fraude_desvio" onchange="alterarRegra()">
+      <label for="fraude_desvio"><strong>Manipulação de Desvio:</strong> Se votar em <strong>99 - Daniel Cerri (Back End)</strong>, computa o incremento para Eduardo Jorge (88).</label>
+      
+      <div class="codigo-exemplo" id="codigo-preview">
+        // Lógica Atual executada ao clicar em CONFIRMAR:
+        candidato.votos = candidato.votos + 1;
+      </div>
+    </div>
+
+    <h3>Contagem Real das Variáveis na Memória (Tabela do Servidor/Memória)</h3>
+    <table class="tabela-votos">
+      <thead>
+        <tr>
+          <th>Opção / Candidato</th>
+          <th>Partido</th>
+          <th>Número</th>
+          <th>Votos Esperados (Cliques)</th>
+          <th>Votos Armazenados (Contador JS)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Eduardo Jorge</td>
+          <td>IOT</td>
+          <td>88</td>
+          <td id="exp-88">0</td>
+          <td id="votos-88" style="font-weight: bold; color: #16a34a;">0</td>
+        </tr>
+        <tr>
+          <td>Daniel Cerri</td>
+          <td>Back End</td>
+          <td>99</td>
+          <td id="exp-99">0</td>
+          <td id="votos-99" style="font-weight: bold; color: #16a34a;">0</td>
+        </tr>
+        <tr>
+          <td>Votos Brancos/Nulos</td>
+          <td>--</td>
+          <td>--</td>
+          <td id="exp-outros">0</td>
+          <td id="votos-outros">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // --- ESTADO DA APLICAÇÃO ---
+    const candidatos = {
+      "88": { nome: "Eduardo Jorge", partido: "IOT", votos: 0, cliquesEsperados: 0 },
+      "99": { nome: "Daniel Cerri", partido: "Back End", votos: 0, cliquesEsperados: 0 }
+    };
+
+    let votosOutros = 0;
+    let cliquesEsperadosOutros = 0;
+
+    let numeroDigitado = "";
+    let eBranco = false;
+    let regraAtual = "normal";
+
+    // Audio Context para os sons da urna
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function tocarSom(freq, duracao) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + duracao);
+    }
+
+    function somBeep() { tocarSom(440, 0.08); }
+    function somConfirma() {
+      tocarSom(1250, 0.1);
+      setTimeout(() => tocarSom(1750, 0.25), 100);
+    }
+
+    // --- INTERFACE DA TELA ---
+    function atualizarTela() {
+      const tela = document.getElementById('tela');
+
+      if (eBranco) {
+        tela.innerHTML = `
+          <div class="tela-header">SEU VOTO VAI PARA</div>
+          <div class="cargo">PREFEITO</div>
+          <div style="font-size: 30px; text-align: center; font-weight: bold; margin: 30px 0;">VOTO EM BRANCO</div>
+          <div class="instrucoes-rodape">
+            Aperte teclas:<br>
+            <strong>CONFIRMA</strong> para CONFIRMAR este voto<br>
+            <strong>CORRIGE</strong> para REINICIAR este voto
+          </div>
+        `;
+        return;
+      }
+
+      const d1 = numeroDigitado[0] || '';
+      const d2 = numeroDigitado[1] || '';
+      const pisca1 = numeroDigitado.length === 0 ? 'pisca' : '';
+      const pisca2 = numeroDigitado.length === 1 ? 'pisca' : '';
+
+      let infoHTML = '';
+      const cand = candidatos[numeroDigitado];
+
+      if (numeroDigitado.length === 2) {
+        if (cand) {
+          infoHTML = `
+            <div class="info-candidato">
+              Nome: <strong>${cand.nome}</strong><br>
+              Partido: <strong>${cand.partido}</strong>
+            </div>
+          `;
+        } else {
+          infoHTML = `
+            <div class="info-candidato" style="color: red;">
+              <strong>VOTO NULO</strong><br>Número não cadastrado.
+            </div>
+          `;
+        }
+      }
+
+      tela.innerHTML = `
+        <div class="tela-header">SEU VOTO VAI PARA</div>
+        <div class="cargo">PREFEITO</div>
+        <div class="numero-container">
+          <div class="caixa-digito ${pisca1}">${d1}</div>
+          <div class="caixa-digito ${pisca2}">${d2}</div>
+        </div>
+        ${infoHTML}
+        <div class="instrucoes-rodape">
+          Aperte teclas:<br>
+          <strong>CONFIRMA</strong> para CONFIRMAR este voto<br>
+          <strong>CORRIGE</strong> para REINICIAR este voto
+        </div>
+      `;
+    }
+
+    // --- AÇÕES DO TECLADO ---
+    function digitar(n) {
+      if (eBranco) return;
+      if (numeroDigitado.length < 2) {
+        somBeep();
+        numeroDigitado += n;
+        atualizarTela();
+      }
+    }
+
+    function votarBranco() {
+      somBeep();
+      numeroDigitado = "";
+      eBranco = true;
+      atualizarTela();
+    }
+
+    function corrigir() {
+      somBeep();
+      numeroDigitado = "";
+      eBranco = false;
+      atualizarTela();
+    }
+
+    // --- LÓGICA DE CONFIRMAÇÃO E MANIPULAÇÃO DO INCREMENTO ---
+    function confirmar() {
+      if (numeroDigitado.length !== 2 && !eBranco) return;
+
+      somConfirma();
+
+      // 1. Atualiza o que o usuário REALMENTE pretendia (Expectativa do Eleitor)
+      if (eBranco || !candidatos[numeroDigitado]) {
+        cliquesEsperadosOutros++;
+      } else {
+        candidatos[numeroDigitado].cliquesEsperados++;
+      }
+
+      // 2. LÓGICA DE INCREMENTO MANIPULADO NO CÓDIGO-FONTE
+      if (regraAtual === "normal") {
+        if (eBranco || !candidatos[numeroDigitado]) {
+          votosOutros += 1;
+        } else {
+          candidatos[numeroDigitado].votos += 1;
+        }
+      } 
+      else if (regraAtual === "fraude_peso") {
+        if (numeroDigitado === "88") {
+          candidatos["88"].votos += 2; // Incremento duplo para Eduardo Jorge (IOT)
+        } else if (eBranco || !candidatos[numeroDigitado]) {
+          votosOutros += 1;
+        } else {
+          candidatos[numeroDigitado].votos += 1;
+        }
+      } 
+      else if (regraAtual === "fraude_desvio") {
+        if (numeroDigitado === "99") {
+          candidatos["88"].votos += 1; // Voto no Daniel Cerri (Back End) vai para Eduardo Jorge (IOT)
+        } else if (eBranco || !candidatos[numeroDigitado]) {
+          votosOutros += 1;
+        } else {
+          candidatos[numeroDigitado].votos += 1;
+        }
+      }
+
+      // Exibe tela de "FIM"
+      document.getElementById('tela').innerHTML = `<div class="tela-fim">FIM</div>`;
+
+      // Atualiza a tabela do painel
+      atualizarTabela();
+
+      // Reseta a urna para o próximo voto após 1.5s
+      setTimeout(() => {
+        corrigir();
+      }, 1500);
+    }
+
+    // --- LÓGICA DE PRESSIONAR CONFIRMA POR 3 SEGUNDOS (ALTERNAR EXIBIÇÃO) ---
+    const btnConfirma = document.getElementById('btn-confirma');
+    let pressTimer = null;
+    let foiLongPress = false;
+
+    function iniciarPressionar(e) {
+      if (e.type === 'touchstart') e.preventDefault();
+      foiLongPress = false;
+      
+      pressTimer = setTimeout(() => {
+        foiLongPress = true;
+        alternarPainel();
+      }, 3000); // 3000ms = 3 segundos
+    }
+
+    function cancelarPressionar() {
+      clearTimeout(pressTimer);
+    }
+
+    function soltarPressionar(e) {
+      if (e.type === 'touchend') e.preventDefault();
+      clearTimeout(pressTimer);
+
+      // Se não foi clique longo, realiza a confirmação normal do voto
+      if (!foiLongPress) {
+        confirmar();
+      }
+    }
+
+    function alternarPainel() {
+      const painel = document.getElementById('painel-professor');
+      const estaVisivel = window.getComputedStyle(painel).display !== 'none';
+
+      if (estaVisivel) {
+        painel.style.display = 'none';
+        tocarSom(350, 0.15); // Som grave indicando fechamento
+      } else {
+        painel.style.display = 'block';
+        tocarSom(880, 0.25); // Som de abertura
+        painel.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // Eventos do mouse e toque para o botão Confirma
+    btnConfirma.addEventListener('mousedown', iniciarPressionar);
+    btnConfirma.addEventListener('mouseup', soltarPressionar);
+    btnConfirma.addEventListener('mouseleave', cancelarPressionar);
+
+    btnConfirma.addEventListener('touchstart', iniciarPressionar, { passive: false });
+    btnConfirma.addEventListener('touchend', soltarPressionar, { passive: false });
+
+    // --- PAINEL DIDÁTICO / PROFESSOR ---
+    function alterarRegra() {
+      const opcoes = document.getElementsByName('regra_voto');
+      for (const op of opcoes) {
+        if (op.checked) regraAtual = op.value;
+      }
+
+      const preview = document.getElementById('codigo-preview');
+      
+      if (regraAtual === "normal") {
+        preview.innerText = `// Lógica Padrão (+1 no candidato selecionado)\ncandidato.votos = candidato.votos + 1;`;
+      } else if (regraAtual === "fraude_peso") {
+        preview.innerText = `// Lógica Manipulada (Fator de incremento alterado para Eduardo Jorge - IOT)\nif (numero === '88') {\n    candidato.votos += 2; // Incremento duplo adulterado\n} else {\n    candidato.votos += 1;\n}`;
+      } else if (regraAtual === "fraude_desvio") {
+        preview.innerText = `// Lógica Manipulada (Desvio do voto de Daniel Cerri - Back End para Eduardo Jorge - IOT)\nif (numero === '99') {\n    candidatos['88'].votos += 1; // Redireciona o incremento para a variável do 88\n} else {\n    candidato.votos += 1;\n}`;
+      }
+    }
+
+    function atualizarTabela() {
+      document.getElementById('exp-88').innerText = candidatos["88"].cliquesEsperados;
+      document.getElementById('votos-88').innerText = candidatos["88"].votos;
+
+      document.getElementById('exp-99').innerText = candidatos["99"].cliquesEsperados;
+      document.getElementById('votos-99').innerText = candidatos["99"].votos;
+
+      document.getElementById('exp-outros').innerText = cliquesEsperadosOutros;
+      document.getElementById('votos-outros').innerText = votosOutros;
+    }
+
+    // --- FUNÇÃO PARA IMPRIMIR O RELATÓRIO ---
+    function imprimirRelatorio() {
+      window.print();
+    }
+
+    // Inicialização
+    atualizarTela();
+  </script>
+</body>
+</html>
